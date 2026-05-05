@@ -18,7 +18,10 @@
                 <h1 class="text-4xl font-bold">My AED Savings Tracker 💰</h1>
                 <p class="text-xl mt-1 opacity-90">For Ameera & our family ❤️ • All in AED</p>
             </div>
-            <button onclick="resetAllData()" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-3xl text-sm font-medium transition">Reset All Data</button>
+            <button onclick="resetAllData()" 
+                    class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-3xl text-sm font-medium transition">
+                Reset All Data
+            </button>
         </div>
 
         <!-- Savings Display -->
@@ -44,36 +47,42 @@
             <button onclick="showTab(3)" id="tab-3" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">Income</button>
             <button onclick="showTab(4)" id="tab-4" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">Expenses</button>
             <button onclick="showTab(5)" id="tab-5" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">Transactions</button>
+            <button onclick="showTab(6)" id="tab-6" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">History</button>
         </div>
 
-        <!-- Tab Contents (only 1-5 need divs) -->
-        <div id="content-1" class="tab-content hidden"> <!-- Banks --> </div>
-        <div id="content-2" class="tab-content hidden"> <!-- Credit --> </div>
-        <div id="content-3" class="tab-content hidden"> <!-- Income --> </div>
-        <div id="content-4" class="tab-content hidden"> <!-- Expenses --> </div>
-        <div id="content-5" class="tab-content hidden"> <!-- Transactions --> </div>
+        <!-- Tab Contents -->
+        <div id="content-1" class="tab-content hidden"></div>
+        <div id="content-2" class="tab-content hidden"></div>
+        <div id="content-3" class="tab-content hidden"></div>
+        <div id="content-4" class="tab-content hidden"></div>
+        <div id="content-5" class="tab-content hidden"></div>
+        <div id="content-6" class="tab-content hidden"></div>
     </div>
 
     <script>
-        let data = { banks: [], creditCards: [], incomes: [], expenses: [], transactions: [] };
+        let data = { banks: [], creditCards: [], incomes: [], expenses: [], transactions: [], history: [] };
 
         function loadData() {
             const saved = localStorage.getItem('aedSavingsData');
             if (saved) data = JSON.parse(saved);
             else {
+                // Sample data for first time
                 data = {
                     banks: [{id:1, name:"Emirates NBD Savings", balance:8500}],
                     creditCards: [{id:1, name:"Visa - Personal", limit:15000, balance:4200}],
                     incomes: [{id:1, name:"Monthly Salary", amount:18500}, {id:2, name:"Pocket Money from Husband", amount:2500}],
                     expenses: [{id:1, name:"Maid Fee (Ameera)", amount:1200}, {id:2, name:"Grocery Budget", amount:900}, {id:3, name:"Miscellaneous Dues", amount:450}],
-                    transactions: []
+                    transactions: [],
+                    history: []
                 };
                 saveData();
             }
             renderAll();
         }
 
-        function saveData() { localStorage.setItem('aedSavingsData', JSON.stringify(data)); }
+        function saveData() {
+            localStorage.setItem('aedSavingsData', JSON.stringify(data));
+        }
 
         function calculateSavings() {
             const banks = data.banks.reduce((sum, b) => sum + (b.balance||0), 0);
@@ -85,18 +94,16 @@
         }
 
         function renderAll() {
-            // Savings
             const savings = calculateSavings();
             document.getElementById('savings').textContent = `د.إ ${savings.toLocaleString('en-US')}`;
             document.getElementById('savings-date').textContent = `Updated just now • ${new Date().toLocaleDateString('en-GB')}`;
 
-            // Summary cards
             document.getElementById('total-banks').textContent = `د.إ ${data.banks.reduce((s,b)=>s+(b.balance||0),0).toLocaleString('en-US')}`;
             document.getElementById('total-credit').textContent = `د.إ ${data.creditCards.reduce((s,c)=>s+((c.limit||0)-(c.balance||0)),0).toLocaleString('en-US')}`;
             document.getElementById('total-income').textContent = `د.إ ${data.incomes.reduce((s,i)=>s+(i.amount||0),0).toLocaleString('en-US')}`;
             document.getElementById('total-expenses').textContent = `د.إ ${data.expenses.reduce((s,e)=>s+(e.amount||0),0).toLocaleString('en-US')}`;
 
-            renderBanks(); renderCreditCards(); renderIncomes(); renderExpenses(); renderTransactions();
+            renderBanks(); renderCreditCards(); renderIncomes(); renderExpenses(); renderTransactions(); renderHistory();
         }
 
         function showTab(n) {
@@ -108,8 +115,8 @@
             if (el) el.classList.remove('hidden');
         }
 
-        // === RENDER FUNCTIONS WITH REMOVE + EDIT ===
-        function renderBanks() {
+        // Render functions (same as before + new History)
+        function renderBanks() { /* ... same as previous version ... */ 
             const container = document.getElementById('content-1') || createContentDiv(1);
             container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Bank Accounts</h2><div id="banks-list" class="space-y-3"></div><button onclick="addBank()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Bank Account</button></div>`;
             const list = container.querySelector('#banks-list');
@@ -127,22 +134,22 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No bank accounts yet</p>';
         }
 
-        function renderCreditCards() { /* same pattern as before but now inside content-2 */ 
+        // (Credit Cards, Income, Expenses, Transactions render functions are the same as last version - kept short here for space)
+        function renderCreditCards() { /* same as before */ 
             const container = document.getElementById('content-2') || createContentDiv(2);
             container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Credit Cards</h2><div id="cards-list" class="space-y-3"></div><button onclick="addCreditCard()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Credit Card</button></div>`;
             const list = container.querySelector('#cards-list');
             list.innerHTML = data.creditCards.map(c => {
                 const avail = c.limit - c.balance;
-                return `
-                    <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
-                        <div><p class="font-medium">${c.name}</p><p class="text-sm opacity-75">Limit: د.إ ${c.limit} • Available: د.إ ${avail}</p></div>
-                        <div class="text-right"><p class="text-2xl font-semibold text-rose-200">د.إ ${c.balance}</p><p class="text-xs opacity-75">Used</p>
-                        <div class="mt-2 flex gap-4 text-xs"><button onclick="editCreditCard(${c.id})" class="text-blue-200">Edit</button><button onclick="deleteCreditCard(${c.id})" class="text-rose-300">Remove</button></div></div>
-                    </div>`;
+                return `<div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
+                    <div><p class="font-medium">${c.name}</p><p class="text-sm opacity-75">Limit: د.إ ${c.limit} • Available: د.إ ${avail}</p></div>
+                    <div class="text-right"><p class="text-2xl font-semibold text-rose-200">د.إ ${c.balance}</p><p class="text-xs opacity-75">Used</p>
+                    <div class="mt-2 flex gap-4 text-xs"><button onclick="editCreditCard(${c.id})" class="text-blue-200">Edit</button><button onclick="deleteCreditCard(${c.id})" class="text-rose-300">Remove</button></div></div>
+                </div>`;
             }).join('') || '<p class="opacity-50 py-8 text-center">No credit cards yet</p>';
         }
 
-        function renderIncomes() {
+        function renderIncomes() { /* same */ 
             const container = document.getElementById('content-3') || createContentDiv(3);
             container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Monthly Income</h2><div id="income-list" class="space-y-3"></div><button onclick="addIncome()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Income Source</button></div>`;
             const list = container.querySelector('#income-list');
@@ -160,7 +167,7 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No income sources yet</p>';
         }
 
-        function renderExpenses() {
+        function renderExpenses() { /* same */ 
             const container = document.getElementById('content-4') || createContentDiv(4);
             container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Monthly Fixed Expenses</h2><div id="expenses-list" class="space-y-3"></div><button onclick="addExpense()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Fixed Expense</button></div>`;
             const list = container.querySelector('#expenses-list');
@@ -178,7 +185,7 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No fixed expenses yet</p>';
         }
 
-        function renderTransactions() {
+        function renderTransactions() { /* same */ 
             const container = document.getElementById('content-5') || createContentDiv(5);
             container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Recent Transactions</h2><div id="transactions-list" class="space-y-3 max-h-96 overflow-auto"></div><button onclick="addTransaction()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Record New Expense / Income</button></div>`;
             const list = container.querySelector('#transactions-list');
@@ -193,6 +200,30 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No transactions yet</p>';
         }
 
+        function renderHistory() {
+            const container = document.getElementById('content-6') || createContentDiv(6);
+            let html = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">History & Backups</h2><div class="space-y-4">`;
+            
+            if (data.history.length === 0) {
+                html += `<p class="opacity-50 py-12 text-center">No backups yet. Click "Reset All Data" to create your first backup.</p>`;
+            } else {
+                html += data.history.map(h => `
+                    <div class="bg-white/10 p-5 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">${h.timestamp}</p>
+                            <p class="text-emerald-300">Savings at that time: د.إ ${h.savings.toLocaleString('en-US')}</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="restoreSnapshot(${h.id})" class="px-5 py-2 bg-emerald-400 text-white rounded-2xl text-sm font-medium">Restore</button>
+                            <button onclick="deleteSnapshot(${h.id})" class="px-5 py-2 bg-rose-300 text-white rounded-2xl text-sm font-medium">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
         function createContentDiv(n) {
             const div = document.createElement('div');
             div.id = 'content-' + n;
@@ -201,36 +232,80 @@
             return div;
         }
 
-        // Delete & Edit functions
-        function deleteBank(id) { if(confirm('Remove this bank?')) { data.banks = data.banks.filter(b=>b.id!==id); saveData(); renderAll(); } }
-        function deleteCreditCard(id) { if(confirm('Remove this card?')) { data.creditCards = data.creditCards.filter(c=>c.id!==id); saveData(); renderAll(); } }
-        function deleteIncome(id) { if(confirm('Remove this income source?')) { data.incomes = data.incomes.filter(i=>i.id!==id); saveData(); renderAll(); } }
-        function deleteExpense(id) { if(confirm('Remove this expense?')) { data.expenses = data.expenses.filter(e=>e.id!==id); saveData(); renderAll(); } }
-        function deleteTransaction(id) { if(confirm('Delete this transaction?')) { data.transactions = data.transactions.filter(t=>t.id!==id); saveData(); renderAll(); } }
+        // === RESET WITH BACKUP ===
+        function resetAllData() {
+            if (!confirm("⚠️ This will:\n\n1. Save a full backup of ALL your current data\n2. Then clear everything\n\nContinue?")) return;
 
-        function editIncome(id) {
-            const item = data.incomes.find(i=>i.id===id);
-            const newName = prompt("New name:", item.name);
-            const newAmount = parseFloat(prompt("New monthly amount (AED):", item.amount));
-            if (newName && !isNaN(newAmount)) { item.name = newName; item.amount = newAmount; saveData(); renderAll(); }
-        }
-        function editExpense(id) {
-            const item = data.expenses.find(e=>e.id===id);
-            const newName = prompt("New name:", item.name);
-            const newAmount = parseFloat(prompt("New monthly amount (AED):", item.amount));
-            if (newName && !isNaN(newAmount)) { item.name = newName; item.amount = newAmount; saveData(); renderAll(); }
-        }
-        function editBank(id) { /* similar simple prompt edit */ alert("Bank edit coming in next update if you want it!"); }
-        function editCreditCard(id) { alert("Credit card edit coming soon!"); }
+            const currentSavings = calculateSavings();
+            const snapshot = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('en-GB'),
+                savings: currentSavings,
+                dataSnapshot: {
+                    banks: JSON.parse(JSON.stringify(data.banks)),
+                    creditCards: JSON.parse(JSON.stringify(data.creditCards)),
+                    incomes: JSON.parse(JSON.stringify(data.incomes)),
+                    expenses: JSON.parse(JSON.stringify(data.expenses)),
+                    transactions: JSON.parse(JSON.stringify(data.transactions))
+                }
+            };
 
-        // Add functions (unchanged)
+            data.history.unshift(snapshot); // newest first
+
+            // Clear current data
+            data.banks = [];
+            data.creditCards = [];
+            data.incomes = [];
+            data.expenses = [];
+            data.transactions = [];
+
+            saveData();
+            renderAll();
+            alert("✅ Backup saved in History tab!\n\nCurrent data has been cleared.");
+        }
+
+        function restoreSnapshot(id) {
+            const snapshot = data.history.find(h => h.id === id);
+            if (!snapshot) return;
+            if (!confirm("Restore this backup? Current data will be replaced.")) return;
+
+            data.banks = JSON.parse(JSON.stringify(snapshot.dataSnapshot.banks));
+            data.creditCards = JSON.parse(JSON.stringify(snapshot.dataSnapshot.creditCards));
+            data.incomes = JSON.parse(JSON.stringify(snapshot.dataSnapshot.incomes));
+            data.expenses = JSON.parse(JSON.stringify(snapshot.dataSnapshot.expenses));
+            data.transactions = JSON.parse(JSON.stringify(snapshot.dataSnapshot.transactions));
+
+            saveData();
+            renderAll();
+            showTab(0); // go back to dashboard
+        }
+
+        function deleteSnapshot(id) {
+            if (!confirm("Delete this backup permanently?")) return;
+            data.history = data.history.filter(h => h.id !== id);
+            saveData();
+            renderHistory();
+        }
+
+        // Add / Delete / Edit functions (unchanged from last version)
         function addBank() { const name=prompt("Bank name:"), bal=parseFloat(prompt("Balance AED:")); if(name&&!isNaN(bal)){data.banks.push({id:Date.now(),name,balance:bal});saveData();renderAll();}}
-        function addCreditCard() { const name=prompt("Card name:"), lim=parseFloat(prompt("Limit AED:")), bal=parseFloat(prompt("Used balance AED:")); if(name&&!isNaN(lim)&&!isNaN(bal)){data.creditCards.push({id:Date.now(),name,limit:lim,balance:bal});saveData();renderAll();}}
-        function addIncome() { const name=prompt("Income source:"), amt=parseFloat(prompt("Monthly amount AED:")); if(name&&!isNaN(amt)){data.incomes.push({id:Date.now(),name,amount:amt});saveData();renderAll();}}
-        function addExpense() { const name=prompt("Expense name:"), amt=parseFloat(prompt("Monthly amount AED:")); if(name&&!isNaN(amt)){data.expenses.push({id:Date.now(),name,amount:amt});saveData();renderAll();}}
-        function addTransaction() { const desc=prompt("Description:"), amt=parseFloat(prompt("Amount (use - for expense):")); if(desc&&!isNaN(amt)){data.transactions.push({id:Date.now(),date:new Date().toLocaleDateString('en-GB'),description:desc,amount:amt});saveData();renderAll();}}
+        function deleteBank(id){if(confirm('Remove?')){data.banks=data.banks.filter(b=>b.id!==id);saveData();renderAll();}}
+        function editBank(id){alert("Bank edit coming soon!");} // can expand later
 
-        function resetAllData() { if(confirm("Delete ALL data?")){localStorage.removeItem('aedSavingsData');location.reload();} }
+        function addCreditCard(){const name=prompt("Card name:"),lim=parseFloat(prompt("Limit AED:")),bal=parseFloat(prompt("Used AED:"));if(name&&!isNaN(lim)&&!isNaN(bal)){data.creditCards.push({id:Date.now(),name,limit:lim,balance:bal});saveData();renderAll();}}
+        function deleteCreditCard(id){if(confirm('Remove?')){data.creditCards=data.creditCards.filter(c=>c.id!==id);saveData();renderAll();}}
+        function editCreditCard(id){alert("Credit card edit coming soon!");}
+
+        function addIncome(){const name=prompt("Income source:"),amt=parseFloat(prompt("Monthly amount AED:"));if(name&&!isNaN(amt)){data.incomes.push({id:Date.now(),name,amount:amt});saveData();renderAll();}}
+        function deleteIncome(id){if(confirm('Remove?')){data.incomes=data.incomes.filter(i=>i.id!==id);saveData();renderAll();}}
+        function editIncome(id){const item=data.incomes.find(i=>i.id===id);const nn=prompt("New name:",item.name);const na=parseFloat(prompt("New amount:",item.amount));if(nn&&!isNaN(na)){item.name=nn;item.amount=na;saveData();renderAll();}}
+
+        function addExpense(){const name=prompt("Expense name:"),amt=parseFloat(prompt("Monthly amount AED:"));if(name&&!isNaN(amt)){data.expenses.push({id:Date.now(),name,amount:amt});saveData();renderAll();}}
+        function deleteExpense(id){if(confirm('Remove?')){data.expenses=data.expenses.filter(e=>e.id!==id);saveData();renderAll();}}
+        function editExpense(id){const item=data.expenses.find(e=>e.id===id);const nn=prompt("New name:",item.name);const na=parseFloat(prompt("New amount:",item.amount));if(nn&&!isNaN(na)){item.name=nn;item.amount=na;saveData();renderAll();}}
+
+        function addTransaction(){const desc=prompt("Description:"),amt=parseFloat(prompt("Amount (use - for expense):"));if(desc&&!isNaN(amt)){data.transactions.push({id:Date.now(),date:new Date().toLocaleDateString('en-GB'),description:desc,amount:amt});saveData();renderAll();}}
+        function deleteTransaction(id){if(confirm('Delete?')){data.transactions=data.transactions.filter(t=>t.id!==id);saveData();renderAll();}}
 
         window.onload = () => { loadData(); showTab(0); };
     </script>
