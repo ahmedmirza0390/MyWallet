@@ -2,45 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My AED Savings Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; color: white; }
-        .glass { background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
+        .glass { background: rgba(255,255,255,0.15); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.25); }
         .big-number { font-size: 3.5rem; line-height: 1; }
+        .modal { animation: modalPop 0.3s ease; }
+        @keyframes modalPop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        input, button { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 pb-24">
     <div class="max-w-6xl mx-auto">
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-4xl font-bold">My AED Savings Tracker 💰</h1>
                 <p class="text-xl mt-1 opacity-90">For Ameera & our family ❤️ • All in AED</p>
             </div>
-            <button onclick="resetAllData()" 
-                    class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-3xl text-sm font-medium transition">
-                Reset All Data
-            </button>
+            <button onclick="resetAllData()" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-3xl text-sm font-medium transition">Reset All Data</button>
         </div>
 
-        <!-- Savings Display -->
+        <!-- Savings -->
         <div class="glass rounded-3xl p-8 mb-8 text-center">
             <p class="uppercase tracking-widest text-sm opacity-75 mb-2">Your Current Available Savings</p>
             <div id="savings" class="big-number font-bold">د.إ 0</div>
             <p id="savings-date" class="text-sm opacity-75 mt-2"></p>
         </div>
 
-        <!-- Summary Cards -->
+        <!-- Summary -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div class="glass rounded-3xl p-6"><div class="flex items-center gap-3"><span class="text-3xl">🏦</span><div><p class="text-sm opacity-75">Bank Accounts</p><div id="total-banks" class="text-3xl font-semibold">د.إ 0</div></div></div></div>
-            <div class="glass rounded-3xl p-6"><div class="flex items-center gap-3"><span class="text-3xl">💳</span><div><p class="text-sm opacity-75">Credit Available</p><div id="total-credit" class="text-3xl font-semibold">د.إ 0</div></div></div></div>
+            <div class="glass rounded-3xl p-6"><div class="flex items-center gap-3"><span class="text-3xl">💳</span><div><p class="text-sm opacity-75">Credit Used</p><div id="total-credit" class="text-3xl font-semibold text-rose-200">د.إ 0</div></div></div></div>
             <div class="glass rounded-3xl p-6"><div class="flex items-center gap-3"><span class="text-3xl">📈</span><div><p class="text-sm opacity-75">Monthly Income</p><div id="total-income" class="text-3xl font-semibold">د.إ 0</div></div></div></div>
             <div class="glass rounded-3xl p-6"><div class="flex items-center gap-3"><span class="text-3xl">📉</span><div><p class="text-sm opacity-75">Monthly Commitments</p><div id="total-expenses" class="text-3xl font-semibold text-rose-200">د.إ 0</div></div></div></div>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-2 mb-6 border-b border-white/20 overflow-x-auto">
+        <div class="flex gap-2 mb-6 border-b border-white/20 overflow-x-auto pb-1">
             <button onclick="showTab(0)" id="tab-0" class="tab-button active px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">Dashboard</button>
             <button onclick="showTab(1)" id="tab-1" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">Banks</button>
             <button onclick="showTab(2)" id="tab-2" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">Credit Cards</button>
@@ -50,7 +50,6 @@
             <button onclick="showTab(6)" id="tab-6" class="tab-button px-8 py-3 rounded-t-3xl font-medium whitespace-nowrap">History</button>
         </div>
 
-        <!-- Tab Contents -->
         <div id="content-1" class="tab-content hidden"></div>
         <div id="content-2" class="tab-content hidden"></div>
         <div id="content-3" class="tab-content hidden"></div>
@@ -59,17 +58,31 @@
         <div id="content-6" class="tab-content hidden"></div>
     </div>
 
+    <!-- BEAUTIFUL MODAL -->
+    <div id="modal" onclick="if(event.target.id==='modal')hideModal()" class="hidden fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50">
+        <div onclick="event.stopImmediatePropagation()" class="modal glass w-full max-w-lg mx-4 md:mx-0 rounded-3xl p-8 mb-4 md:mb-0">
+            <h2 id="modal-title" class="text-2xl font-semibold mb-6"></h2>
+            
+            <div id="modal-fields" class="space-y-6"></div>
+
+            <div class="flex gap-4 mt-10">
+                <button onclick="hideModal()" class="flex-1 py-4 text-white font-medium rounded-3xl border border-white/30 hover:bg-white/10 transition">Cancel</button>
+                <button onclick="saveModal()" class="flex-1 py-4 bg-white text-indigo-700 font-semibold rounded-3xl transition">Save</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let data = { banks: [], creditCards: [], incomes: [], expenses: [], transactions: [], history: [] };
+        let currentEdit = { type: null, id: null };
 
         function loadData() {
             const saved = localStorage.getItem('aedSavingsData');
             if (saved) data = JSON.parse(saved);
             else {
-                // Sample data for first time
                 data = {
                     banks: [{id:1, name:"Emirates NBD Savings", balance:8500}],
-                    creditCards: [{id:1, name:"Visa - Personal", limit:15000, balance:4200}],
+                    creditCards: [],
                     incomes: [{id:1, name:"Monthly Salary", amount:18500}, {id:2, name:"Pocket Money from Husband", amount:2500}],
                     expenses: [{id:1, name:"Maid Fee (Ameera)", amount:1200}, {id:2, name:"Grocery Budget", amount:900}, {id:3, name:"Miscellaneous Dues", amount:450}],
                     transactions: [],
@@ -80,17 +93,15 @@
             renderAll();
         }
 
-        function saveData() {
-            localStorage.setItem('aedSavingsData', JSON.stringify(data));
-        }
+        function saveData() { localStorage.setItem('aedSavingsData', JSON.stringify(data)); }
 
         function calculateSavings() {
             const banks = data.banks.reduce((sum, b) => sum + (b.balance||0), 0);
-            const creditAvail = data.creditCards.reduce((sum, c) => sum + ((c.limit||0) - (c.balance||0)), 0);
             const income = data.incomes.reduce((sum, i) => sum + (i.amount||0), 0);
             const expense = data.expenses.reduce((sum, e) => sum + (e.amount||0), 0);
+            const creditUsed = data.creditCards.reduce((sum, c) => sum + ((c.limit||0) - (c.remaining||0)), 0);
             const trans = data.transactions.reduce((sum, t) => sum + (t.amount||0), 0);
-            return Math.round(banks + creditAvail + income - expense + trans);
+            return Math.round(banks + income - expense - creditUsed + trans);
         }
 
         function renderAll() {
@@ -99,7 +110,8 @@
             document.getElementById('savings-date').textContent = `Updated just now • ${new Date().toLocaleDateString('en-GB')}`;
 
             document.getElementById('total-banks').textContent = `د.إ ${data.banks.reduce((s,b)=>s+(b.balance||0),0).toLocaleString('en-US')}`;
-            document.getElementById('total-credit').textContent = `د.إ ${data.creditCards.reduce((s,c)=>s+((c.limit||0)-(c.balance||0)),0).toLocaleString('en-US')}`;
+            const creditUsedTotal = data.creditCards.reduce((sum, c) => sum + ((c.limit||0) - (c.remaining||0)), 0);
+            document.getElementById('total-credit').textContent = `د.إ ${creditUsedTotal.toLocaleString('en-US')}`;
             document.getElementById('total-income').textContent = `د.إ ${data.incomes.reduce((s,i)=>s+(i.amount||0),0).toLocaleString('en-US')}`;
             document.getElementById('total-expenses').textContent = `د.إ ${data.expenses.reduce((s,e)=>s+(e.amount||0),0).toLocaleString('en-US')}`;
 
@@ -115,10 +127,148 @@
             if (el) el.classList.remove('hidden');
         }
 
-        // Render functions (same as before + new History)
-        function renderBanks() { /* ... same as previous version ... */ 
-            const container = document.getElementById('content-1') || createContentDiv(1);
-            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Bank Accounts</h2><div id="banks-list" class="space-y-3"></div><button onclick="addBank()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Bank Account</button></div>`;
+        function createContentDiv(n) {
+            let div = document.getElementById('content-' + n);
+            if (!div) {
+                div = document.createElement('div');
+                div.id = 'content-' + n;
+                div.className = 'tab-content hidden';
+                document.querySelector('.max-w-6xl').appendChild(div);
+            }
+            return div;
+        }
+
+        // ==================== MODAL SYSTEM ====================
+        function showModal(type, editId = null) {
+            currentEdit = { type, id: editId };
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-title');
+            const fields = document.getElementById('modal-fields');
+            fields.innerHTML = '';
+
+            if (type === 'bank') {
+                title.textContent = editId ? 'Edit Bank Account' : 'Add Bank Account';
+                const item = editId ? data.banks.find(i => i.id === editId) : {};
+                fields.innerHTML = `
+                    <div><label class="block text-sm opacity-75 mb-1">Bank Name</label><input id="modal-name" type="text" value="${item.name||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                    <div><label class="block text-sm opacity-75 mb-1">Current Balance (AED)</label><input id="modal-balance" type="number" value="${item.balance||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                `;
+            }
+            else if (type === 'credit') {
+                title.textContent = editId ? 'Edit Credit Card' : 'Add Credit Card';
+                const item = editId ? data.creditCards.find(i => i.id === editId) : {};
+                fields.innerHTML = `
+                    <div><label class="block text-sm opacity-75 mb-1">Card Name</label><input id="modal-name" type="text" value="${item.name||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                    <div><label class="block text-sm opacity-75 mb-1">Total Credit Limit (AED)</label><input id="modal-limit" type="number" value="${item.limit||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                    <div><label class="block text-sm opacity-75 mb-1">Remaining Limit (AED)</label><input id="modal-remaining" type="number" value="${item.remaining||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                `;
+            }
+            else if (type === 'income') {
+                title.textContent = editId ? 'Edit Income' : 'Add Income';
+                const item = editId ? data.incomes.find(i => i.id === editId) : {};
+                fields.innerHTML = `
+                    <div><label class="block text-sm opacity-75 mb-1">Income Source</label><input id="modal-name" type="text" value="${item.name||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                    <div><label class="block text-sm opacity-75 mb-1">Monthly Amount (AED)</label><input id="modal-amount" type="number" value="${item.amount||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                `;
+            }
+            else if (type === 'expense') {
+                title.textContent = editId ? 'Edit Expense' : 'Add Expense';
+                const item = editId ? data.expenses.find(i => i.id === editId) : {};
+                fields.innerHTML = `
+                    <div><label class="block text-sm opacity-75 mb-1">Expense Name</label><input id="modal-name" type="text" value="${item.name||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                    <div><label class="block text-sm opacity-75 mb-1">Monthly Amount (AED)</label><input id="modal-amount" type="number" value="${item.amount||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                `;
+            }
+            else if (type === 'transaction') {
+                title.textContent = editId ? 'Edit Transaction' : 'New Transaction';
+                const item = editId ? data.transactions.find(i => i.id === editId) : {};
+                fields.innerHTML = `
+                    <div><label class="block text-sm opacity-75 mb-1">Description</label><input id="modal-desc" type="text" value="${item.description||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                    <div><label class="block text-sm opacity-75 mb-1">Amount (use – for expense)</label><input id="modal-amount" type="number" step="0.01" value="${item.amount||''}" class="w-full bg-white/20 rounded-2xl px-4 py-4 text-white placeholder-white/50 focus:outline-none"></div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentEdit = { type: null, id: null };
+        }
+
+        function saveModal() {
+            const type = currentEdit.type;
+            const id = currentEdit.id;
+
+            if (type === 'bank') {
+                const name = document.getElementById('modal-name').value.trim();
+                const balance = parseFloat(document.getElementById('modal-balance').value);
+                if (!name || isNaN(balance)) return alert("Please fill all fields");
+                if (id) {
+                    const item = data.banks.find(i => i.id === id);
+                    item.name = name; item.balance = balance;
+                } else {
+                    data.banks.push({id: Date.now(), name, balance});
+                }
+            }
+            else if (type === 'credit') {
+                const name = document.getElementById('modal-name').value.trim();
+                const limit = parseFloat(document.getElementById('modal-limit').value);
+                const remaining = parseFloat(document.getElementById('modal-remaining').value);
+                if (!name || isNaN(limit) || isNaN(remaining)) return alert("Please fill all fields");
+                if (id) {
+                    const item = data.creditCards.find(i => i.id === id);
+                    item.name = name; item.limit = limit; item.remaining = remaining;
+                } else {
+                    data.creditCards.push({id: Date.now(), name, limit, remaining});
+                }
+            }
+            else if (type === 'income') {
+                const name = document.getElementById('modal-name').value.trim();
+                const amount = parseFloat(document.getElementById('modal-amount').value);
+                if (!name || isNaN(amount)) return alert("Please fill all fields");
+                if (id) {
+                    const item = data.incomes.find(i => i.id === id);
+                    item.name = name; item.amount = amount;
+                } else {
+                    data.incomes.push({id: Date.now(), name, amount});
+                }
+            }
+            else if (type === 'expense') {
+                const name = document.getElementById('modal-name').value.trim();
+                const amount = parseFloat(document.getElementById('modal-amount').value);
+                if (!name || isNaN(amount)) return alert("Please fill all fields");
+                if (id) {
+                    const item = data.expenses.find(i => i.id === id);
+                    item.name = name; item.amount = amount;
+                } else {
+                    data.expenses.push({id: Date.now(), name, amount});
+                }
+            }
+            else if (type === 'transaction') {
+                const desc = document.getElementById('modal-desc').value.trim();
+                const amount = parseFloat(document.getElementById('modal-amount').value);
+                if (!desc || isNaN(amount)) return alert("Please fill all fields");
+                if (id) {
+                    const item = data.transactions.find(i => i.id === id);
+                    item.description = desc; item.amount = amount;
+                } else {
+                    data.transactions.push({id: Date.now(), date: new Date().toLocaleDateString('en-GB'), description: desc, amount});
+                }
+            }
+
+            saveData();
+            renderAll();
+            hideModal();
+        }
+
+        // Render functions (same as before but now call showModal)
+        function renderBanks() {
+            const container = createContentDiv(1);
+            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Bank Accounts</h2><div id="banks-list" class="space-y-3"></div><button onclick="showModal('bank')" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Bank Account</button></div>`;
             const list = container.querySelector('#banks-list');
             list.innerHTML = data.banks.map(b => `
                 <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
@@ -126,7 +276,7 @@
                     <div class="text-right">
                         <p class="text-2xl font-semibold">د.إ ${b.balance}</p>
                         <div class="mt-2 flex gap-4 text-xs">
-                            <button onclick="editBank(${b.id})" class="text-blue-200">Edit</button>
+                            <button onclick="showModal('bank', ${b.id})" class="text-blue-200">Edit</button>
                             <button onclick="deleteBank(${b.id})" class="text-rose-300">Remove</button>
                         </div>
                     </div>
@@ -134,24 +284,23 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No bank accounts yet</p>';
         }
 
-        // (Credit Cards, Income, Expenses, Transactions render functions are the same as last version - kept short here for space)
-        function renderCreditCards() { /* same as before */ 
-            const container = document.getElementById('content-2') || createContentDiv(2);
-            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Credit Cards</h2><div id="cards-list" class="space-y-3"></div><button onclick="addCreditCard()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Credit Card</button></div>`;
+        function renderCreditCards() {
+            const container = createContentDiv(2);
+            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Credit Cards</h2><div id="cards-list" class="space-y-3"></div><button onclick="showModal('credit')" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Credit Card</button></div>`;
             const list = container.querySelector('#cards-list');
             list.innerHTML = data.creditCards.map(c => {
-                const avail = c.limit - c.balance;
+                const used = (c.limit || 0) - (c.remaining || 0);
                 return `<div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
-                    <div><p class="font-medium">${c.name}</p><p class="text-sm opacity-75">Limit: د.إ ${c.limit} • Available: د.إ ${avail}</p></div>
-                    <div class="text-right"><p class="text-2xl font-semibold text-rose-200">د.إ ${c.balance}</p><p class="text-xs opacity-75">Used</p>
-                    <div class="mt-2 flex gap-4 text-xs"><button onclick="editCreditCard(${c.id})" class="text-blue-200">Edit</button><button onclick="deleteCreditCard(${c.id})" class="text-rose-300">Remove</button></div></div>
+                    <div><p class="font-medium">${c.name}</p><p class="text-sm opacity-75">Limit: د.إ ${c.limit} • Remaining: د.إ ${c.remaining}</p></div>
+                    <div class="text-right"><p class="text-2xl font-semibold text-rose-200">د.إ ${used}</p><p class="text-xs opacity-75">Used</p>
+                    <div class="mt-2 flex gap-4 text-xs"><button onclick="showModal('credit', ${c.id})" class="text-blue-200">Edit</button><button onclick="deleteCreditCard(${c.id})" class="text-rose-300">Remove</button></div></div>
                 </div>`;
             }).join('') || '<p class="opacity-50 py-8 text-center">No credit cards yet</p>';
         }
 
-        function renderIncomes() { /* same */ 
-            const container = document.getElementById('content-3') || createContentDiv(3);
-            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Monthly Income</h2><div id="income-list" class="space-y-3"></div><button onclick="addIncome()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Income Source</button></div>`;
+        function renderIncomes() { /* similar pattern */ 
+            const container = createContentDiv(3);
+            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Monthly Income</h2><div id="income-list" class="space-y-3"></div><button onclick="showModal('income')" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Income Source</button></div>`;
             const list = container.querySelector('#income-list');
             list.innerHTML = data.incomes.map(i => `
                 <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
@@ -159,7 +308,7 @@
                     <div class="text-right">
                         <p class="text-2xl font-semibold">د.إ ${i.amount}</p>
                         <div class="mt-2 flex gap-4 text-xs">
-                            <button onclick="editIncome(${i.id})" class="text-blue-200">Edit</button>
+                            <button onclick="showModal('income', ${i.id})" class="text-blue-200">Edit</button>
                             <button onclick="deleteIncome(${i.id})" class="text-rose-300">Remove</button>
                         </div>
                     </div>
@@ -167,9 +316,9 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No income sources yet</p>';
         }
 
-        function renderExpenses() { /* same */ 
-            const container = document.getElementById('content-4') || createContentDiv(4);
-            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Monthly Fixed Expenses</h2><div id="expenses-list" class="space-y-3"></div><button onclick="addExpense()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Fixed Expense</button></div>`;
+        function renderExpenses() { /* similar */ 
+            const container = createContentDiv(4);
+            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Monthly Fixed Expenses</h2><div id="expenses-list" class="space-y-3"></div><button onclick="showModal('expense')" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Add Fixed Expense</button></div>`;
             const list = container.querySelector('#expenses-list');
             list.innerHTML = data.expenses.map(e => `
                 <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
@@ -177,7 +326,7 @@
                     <div class="text-right">
                         <p class="text-2xl font-semibold text-rose-200">د.إ ${e.amount}</p>
                         <div class="mt-2 flex gap-4 text-xs">
-                            <button onclick="editExpense(${e.id})" class="text-blue-200">Edit</button>
+                            <button onclick="showModal('expense', ${e.id})" class="text-blue-200">Edit</button>
                             <button onclick="deleteExpense(${e.id})" class="text-rose-300">Remove</button>
                         </div>
                     </div>
@@ -185,9 +334,9 @@
             `).join('') || '<p class="opacity-50 py-8 text-center">No fixed expenses yet</p>';
         }
 
-        function renderTransactions() { /* same */ 
-            const container = document.getElementById('content-5') || createContentDiv(5);
-            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Recent Transactions</h2><div id="transactions-list" class="space-y-3 max-h-96 overflow-auto"></div><button onclick="addTransaction()" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Record New Expense / Income</button></div>`;
+        function renderTransactions() { /* similar */ 
+            const container = createContentDiv(5);
+            container.innerHTML = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">Recent Transactions</h2><div id="transactions-list" class="space-y-3 max-h-96 overflow-auto"></div><button onclick="showModal('transaction')" class="mt-6 w-full py-4 bg-white text-indigo-700 rounded-3xl font-semibold">+ Record New Transaction</button></div>`;
             const list = container.querySelector('#transactions-list');
             list.innerHTML = data.transactions.slice().reverse().map(t => `
                 <div class="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
@@ -201,21 +350,20 @@
         }
 
         function renderHistory() {
-            const container = document.getElementById('content-6') || createContentDiv(6);
+            const container = createContentDiv(6);
             let html = `<div class="glass rounded-3xl p-6"><h2 class="text-2xl mb-4">History & Backups</h2><div class="space-y-4">`;
-            
             if (data.history.length === 0) {
-                html += `<p class="opacity-50 py-12 text-center">No backups yet. Click "Reset All Data" to create your first backup.</p>`;
+                html += `<p class="opacity-50 py-12 text-center">No backups yet.<br>Click "Reset All Data" to create your first backup.</p>`;
             } else {
                 html += data.history.map(h => `
                     <div class="bg-white/10 p-5 rounded-2xl flex justify-between items-center">
                         <div>
                             <p class="font-medium">${h.timestamp}</p>
-                            <p class="text-emerald-300">Savings at that time: د.إ ${h.savings.toLocaleString('en-US')}</p>
+                            <p class="text-emerald-300">Savings: د.إ ${h.savings.toLocaleString('en-US')}</p>
                         </div>
                         <div class="flex gap-3">
-                            <button onclick="restoreSnapshot(${h.id})" class="px-5 py-2 bg-emerald-400 text-white rounded-2xl text-sm font-medium">Restore</button>
-                            <button onclick="deleteSnapshot(${h.id})" class="px-5 py-2 bg-rose-300 text-white rounded-2xl text-sm font-medium">Delete</button>
+                            <button onclick="restoreSnapshot(${h.id})" class="px-6 py-2 bg-emerald-400 text-white rounded-2xl text-sm font-medium">Restore</button>
+                            <button onclick="deleteSnapshot(${h.id})" class="px-6 py-2 bg-rose-300 text-white rounded-2xl text-sm font-medium">Delete</button>
                         </div>
                     </div>
                 `).join('');
@@ -224,88 +372,33 @@
             container.innerHTML = html;
         }
 
-        function createContentDiv(n) {
-            const div = document.createElement('div');
-            div.id = 'content-' + n;
-            div.className = 'tab-content hidden';
-            document.querySelector('.max-w-6xl').appendChild(div);
-            return div;
-        }
+        // Delete functions
+        function deleteBank(id){ if(confirm('Remove this bank account?')){ data.banks = data.banks.filter(b=>b.id!==id); saveData(); renderAll(); }}
+        function deleteCreditCard(id){ if(confirm('Remove this credit card?')){ data.creditCards = data.creditCards.filter(c=>c.id!==id); saveData(); renderAll(); }}
+        function deleteIncome(id){ if(confirm('Remove this income?')){ data.incomes = data.incomes.filter(i=>i.id!==id); saveData(); renderAll(); }}
+        function deleteExpense(id){ if(confirm('Remove this expense?')){ data.expenses = data.expenses.filter(e=>e.id!==id); saveData(); renderAll(); }}
+        function deleteTransaction(id){ if(confirm('Delete this transaction?')){ data.transactions = data.transactions.filter(t=>t.id!==id); saveData(); renderAll(); }}
 
-        // === RESET WITH BACKUP ===
+        // Reset + History functions (same as before)
         function resetAllData() {
-            if (!confirm("⚠️ This will:\n\n1. Save a full backup of ALL your current data\n2. Then clear everything\n\nContinue?")) return;
-
-            const currentSavings = calculateSavings();
-            const snapshot = {
-                id: Date.now(),
-                timestamp: new Date().toLocaleString('en-GB'),
-                savings: currentSavings,
-                dataSnapshot: {
-                    banks: JSON.parse(JSON.stringify(data.banks)),
-                    creditCards: JSON.parse(JSON.stringify(data.creditCards)),
-                    incomes: JSON.parse(JSON.stringify(data.incomes)),
-                    expenses: JSON.parse(JSON.stringify(data.expenses)),
-                    transactions: JSON.parse(JSON.stringify(data.transactions))
-                }
-            };
-
-            data.history.unshift(snapshot); // newest first
-
-            // Clear current data
-            data.banks = [];
-            data.creditCards = [];
-            data.incomes = [];
-            data.expenses = [];
-            data.transactions = [];
-
-            saveData();
-            renderAll();
-            alert("✅ Backup saved in History tab!\n\nCurrent data has been cleared.");
+            if (!confirm("⚠️ Save a backup and clear everything?")) return;
+            const snapshot = { id: Date.now(), timestamp: new Date().toLocaleString('en-GB'), savings: calculateSavings(), dataSnapshot: JSON.parse(JSON.stringify({banks:data.banks, creditCards:data.creditCards, incomes:data.incomes, expenses:data.expenses, transactions:data.transactions})) };
+            data.history.unshift(snapshot);
+            data.banks = []; data.creditCards = []; data.incomes = []; data.expenses = []; data.transactions = [];
+            saveData(); renderAll();
+            alert("✅ Backup saved in History tab!\nAll current data cleared.");
         }
-
         function restoreSnapshot(id) {
-            const snapshot = data.history.find(h => h.id === id);
-            if (!snapshot) return;
-            if (!confirm("Restore this backup? Current data will be replaced.")) return;
-
-            data.banks = JSON.parse(JSON.stringify(snapshot.dataSnapshot.banks));
-            data.creditCards = JSON.parse(JSON.stringify(snapshot.dataSnapshot.creditCards));
-            data.incomes = JSON.parse(JSON.stringify(snapshot.dataSnapshot.incomes));
-            data.expenses = JSON.parse(JSON.stringify(snapshot.dataSnapshot.expenses));
-            data.transactions = JSON.parse(JSON.stringify(snapshot.dataSnapshot.transactions));
-
-            saveData();
-            renderAll();
-            showTab(0); // go back to dashboard
+            const snap = data.history.find(h => h.id === id);
+            if (!snap || !confirm("Restore this backup?")) return;
+            Object.assign(data, snap.dataSnapshot);
+            saveData(); renderAll(); showTab(0);
         }
-
         function deleteSnapshot(id) {
-            if (!confirm("Delete this backup permanently?")) return;
+            if (!confirm("Delete this backup?")) return;
             data.history = data.history.filter(h => h.id !== id);
-            saveData();
-            renderHistory();
+            saveData(); renderHistory();
         }
-
-        // Add / Delete / Edit functions (unchanged from last version)
-        function addBank() { const name=prompt("Bank name:"), bal=parseFloat(prompt("Balance AED:")); if(name&&!isNaN(bal)){data.banks.push({id:Date.now(),name,balance:bal});saveData();renderAll();}}
-        function deleteBank(id){if(confirm('Remove?')){data.banks=data.banks.filter(b=>b.id!==id);saveData();renderAll();}}
-        function editBank(id){alert("Bank edit coming soon!");} // can expand later
-
-        function addCreditCard(){const name=prompt("Card name:"),lim=parseFloat(prompt("Limit AED:")),bal=parseFloat(prompt("Used AED:"));if(name&&!isNaN(lim)&&!isNaN(bal)){data.creditCards.push({id:Date.now(),name,limit:lim,balance:bal});saveData();renderAll();}}
-        function deleteCreditCard(id){if(confirm('Remove?')){data.creditCards=data.creditCards.filter(c=>c.id!==id);saveData();renderAll();}}
-        function editCreditCard(id){alert("Credit card edit coming soon!");}
-
-        function addIncome(){const name=prompt("Income source:"),amt=parseFloat(prompt("Monthly amount AED:"));if(name&&!isNaN(amt)){data.incomes.push({id:Date.now(),name,amount:amt});saveData();renderAll();}}
-        function deleteIncome(id){if(confirm('Remove?')){data.incomes=data.incomes.filter(i=>i.id!==id);saveData();renderAll();}}
-        function editIncome(id){const item=data.incomes.find(i=>i.id===id);const nn=prompt("New name:",item.name);const na=parseFloat(prompt("New amount:",item.amount));if(nn&&!isNaN(na)){item.name=nn;item.amount=na;saveData();renderAll();}}
-
-        function addExpense(){const name=prompt("Expense name:"),amt=parseFloat(prompt("Monthly amount AED:"));if(name&&!isNaN(amt)){data.expenses.push({id:Date.now(),name,amount:amt});saveData();renderAll();}}
-        function deleteExpense(id){if(confirm('Remove?')){data.expenses=data.expenses.filter(e=>e.id!==id);saveData();renderAll();}}
-        function editExpense(id){const item=data.expenses.find(e=>e.id===id);const nn=prompt("New name:",item.name);const na=parseFloat(prompt("New amount:",item.amount));if(nn&&!isNaN(na)){item.name=nn;item.amount=na;saveData();renderAll();}}
-
-        function addTransaction(){const desc=prompt("Description:"),amt=parseFloat(prompt("Amount (use - for expense):"));if(desc&&!isNaN(amt)){data.transactions.push({id:Date.now(),date:new Date().toLocaleDateString('en-GB'),description:desc,amount:amt});saveData();renderAll();}}
-        function deleteTransaction(id){if(confirm('Delete?')){data.transactions=data.transactions.filter(t=>t.id!==id);saveData();renderAll();}}
 
         window.onload = () => { loadData(); showTab(0); };
     </script>
